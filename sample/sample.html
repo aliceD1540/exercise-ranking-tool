@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ランキング</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(to bottom, #f8f8f8, #e0e0ff);
+        text-align: center;
+        padding: 20px;
+      }
+      .container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        align-items: flex-start;
+        flex-wrap: wrap; /* 画面サイズに応じて折り返す */
+      }
+      .ranking-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        width: 100%;
+      }
+      .user-info {
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        max-width: 200px;
+        text-align: left;
+        position: fixed;
+        right: 20px;
+        top: 20px;
+      }
+
+      /* スマホレイアウト時の修正 */
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column-reverse; /* スマホでは「あなたの順位」を上に */
+          align-items: center;
+        }
+        .user-info {
+          position: static;
+          margin-bottom: 20px;
+          max-width: 100%;
+          text-align: center;
+        }
+      }
+
+      .ranking-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        transition: background-color 0.3s ease;
+      }
+      .ranking-item:hover {
+        background-color: #f0f0ff;
+      }
+      .rank {
+        width: 40px;
+        font-weight: bold;
+      }
+      .icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-weight: bold;
+      }
+      .sns-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+      }
+
+      .name {
+        flex: 1;
+        text-align: left;
+      }
+      .points {
+        font-weight: bold;
+        font-size: 1.1em;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <h2 style="color: #444; font-size: 24px; font-weight: bold">🏆 エクササイズランキング 🏆</h2>
+    <div class="container">
+      <div class="ranking-container">
+        <div id="ranking-list"></div>
+      </div>
+      <div class="user-info">
+        <h3 style="color: #444">✨ あなたの順位 ✨</h3>
+        <p id="user-rank"></p>
+        <div class="ranking-item">
+          <div class="icon">💎</div>
+          <div class="name">あなた</div>
+          <div class="points" id="user-points"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const rankingData = [];
+      for (let i = 1; i <= 100; i++) {
+        rankingData.push({
+          rank: i,
+          icon: i <= 3 ? ['🥇', '🥈', '🥉'][i - 1] : '',
+          name: `ユーザー${i}`,
+          points: Math.floor(Math.random() * 1000) + 500,
+        });
+      }
+
+      const rankingList = document.getElementById('ranking-list');
+      rankingData.forEach((entry) => {
+        const item = document.createElement('div');
+        item.className = 'ranking-item';
+        item.innerHTML = `
+                <div class="rank">${entry.rank}</div>
+                ${entry.icon ? `<div class="icon">${entry.icon}</div>` : ''}
+                <div class="name">
+                    <img src="./icon_sample.png" alt="SNSアイコン" class="sns-icon">
+                    ${entry.name}
+                </div>
+                <div class="points">${entry.points}pt</div>
+            `;
+        rankingList.appendChild(item);
+      });
+
+      const userRankIndex = Math.floor(Math.random() * 100);
+      const userRankData = rankingData[userRankIndex];
+
+      document.getElementById('user-rank').innerText = `順位: ${userRankData.rank} 位`;
+      document.getElementById('user-points').innerText = `${userRankData.points}pt`;
+    </script>
+  </body>
+</html>
