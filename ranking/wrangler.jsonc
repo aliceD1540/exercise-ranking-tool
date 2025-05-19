@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "ranking",
+	"name": "exercise-ranking",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-05-19",
 	"observability": {
