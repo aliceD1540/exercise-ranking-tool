@@ -19,9 +19,11 @@ export default {
 				// ランキング情報を返す
 				const json = {
 					ranking: [
-						{ id: 1, name: 'Alice', score: 100 },
-						{ id: 2, name: 'Bob', score: 90 },
-						{ id: 3, name: 'Charlie', score: 80 },
+						{ rank: 1, name: 'Alice', score: 100 },
+						{ rank: 2, name: 'Bob', score: 90 },
+						{ rank: 2, name: 'Charlie', score: 90 },
+						{ rank: 4, name: 'David', score: 70 },
+						{ rank: 5, name: 'Eve', score: 60 },
 					],
 				};
 				return new Response(JSON.stringify(json), {
