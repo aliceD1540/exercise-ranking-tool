@@ -8,6 +8,8 @@
       body {
         font-family: 'Arial', sans-serif;
         background: linear-gradient(to bottom, #f8f8f8, #e0e0ff);
+        background-size: cover;
+        background-attachment: fixed;
         text-align: center;
         padding: 20px;
       }
@@ -78,7 +80,7 @@
     </style>
   </head>
   <body>
-    <h2 style="color: #444; font-size: 24px; font-weight: bold">🏆 SNSランキング 🏆</h2>
+    <h2 style="color: #444; font-size: 24px; font-weight: bold">🏆 青空筋トレ部ランキング 🏆</h2>
     <div class="container">
       <div class="user-info">
         <h3 style="color: #444">✨ あなたの順位 ✨</h3>
@@ -108,16 +110,22 @@
           rankingList.innerHTML = '';
 
           rankingData.ranking.forEach((entry) => {
+            let medalIcon = ''; // メダルアイコンの初期値
+            if (entry.rank === 1) medalIcon = '🥇';
+            else if (entry.rank === 2) medalIcon = '🥈';
+            else if (entry.rank === 3) medalIcon = '🥉';
+
             const item = document.createElement('div');
             item.className = 'ranking-item';
             item.innerHTML = `
-                        <div class="rank">${entry.rank}</div>
-                        <div class="name">
-                            <img src="https://example.com/sns_icon.png" alt="SNSアイコン" class="sns-icon">
-                            ${entry.name}
-                        </div>
-                        <div class="points">${entry.score}pt</div>
-                    `;
+                    <div class="rank">${entry.rank}</div>
+                    <div class="name">
+                        ${medalIcon ? `<span class="medal">${medalIcon}</span>` : ''}
+                        <img src="https://example.com/sns_icon.png" alt="SNSアイコン" class="sns-icon">
+                        ${entry.name}
+                    </div>
+                    <div class="points">${entry.score}pt</div>
+                `;
             rankingList.appendChild(item);
           });
         } catch (error) {
