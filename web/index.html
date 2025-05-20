@@ -3,15 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ランキング</title>
+    <title>Bluesky Workout Rankings</title>
     <style>
       body {
         font-family: 'Arial', sans-serif;
         background: linear-gradient(to bottom, #f8f8f8, #e0e0ff);
-        background-size: cover;
-        background-attachment: fixed;
         text-align: center;
         padding: 20px;
+        min-height: 100vh; /* 縞模様対策として背景を広くする */
       }
       .container {
         display: flex;
@@ -30,11 +29,11 @@
       }
       .user-info {
         background-color: #fff;
-        padding: 10px;
+        padding: 20px;
         border-radius: 10px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        max-width: 200px;
-        text-align: left;
+        max-width: 300px;
+        text-align: center;
         position: fixed;
         right: 20px;
         top: 20px;
@@ -48,7 +47,6 @@
           position: static;
           margin-bottom: 20px;
           max-width: 100%;
-          text-align: center;
         }
       }
       .ranking-item {
@@ -77,27 +75,41 @@
         font-size: 1.1em;
         color: #333;
       }
+      .name-input {
+        width: 100%;
+        padding: 10px;
+        font-size: 1.1em;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        text-align: center;
+        display: block;
+        margin-top: 10px;
+      }
     </style>
   </head>
   <body>
-    <h2 style="color: #444; font-size: 24px; font-weight: bold">🏆 青空筋トレ部ランキング 🏆</h2>
+    <h2 style="color: #444; font-size: 24px; font-weight: bold">🏆 Bluesky Workout Rankings 🏆</h2>
+    <p><a href="" target="_blank">about this.</a></p>
     <div class="container">
+      <div class="ranking-container">
+        <div id="ranking-list">データ取得中...</div>
+      </div>
       <div class="user-info">
         <h3 style="color: #444">✨ あなたの順位 ✨</h3>
         <p id="user-rank">データ取得中...</p>
         <div class="ranking-item">
           <div class="icon">
-            <img
-              src="https://example.com/training_icon.png"
-              alt="トレーニングアイコン"
-              width="40" />
+            <img src="./icon_sample.png" alt="トレーニングアイコン" width="40" />
           </div>
-          <div class="name" id="user-name">あなた</div>
-          <div class="points" id="user-points">...</div>
+          <div class="name">
+            <input
+              type="text"
+              id="user-name-input"
+              class="name-input"
+              placeholder="アカウント名を入力" />
+          </div>
         </div>
-      </div>
-      <div class="ranking-container">
-        <div id="ranking-list">データ取得中...</div>
+        <p id="user-points">...</p>
       </div>
     </div>
 
@@ -118,14 +130,14 @@
             const item = document.createElement('div');
             item.className = 'ranking-item';
             item.innerHTML = `
-                    <div class="rank">${entry.rank}</div>
-                    <div class="name">
-                        ${medalIcon ? `<span class="medal">${medalIcon}</span>` : ''}
-                        <img src="https://example.com/sns_icon.png" alt="SNSアイコン" class="sns-icon">
-                        ${entry.name}
-                    </div>
-                    <div class="points">${entry.score}pt</div>
-                `;
+                        <div class="rank">${entry.rank}</div>
+                        <div class="name">
+                            ${medalIcon ? `<span class="medal">${medalIcon}</span>` : ''}
+                            <img src="./icon_sample.png" alt="SNSアイコン" class="sns-icon">
+                            ${entry.name}
+                        </div>
+                        <div class="points">${entry.score}pt</div>
+                    `;
             rankingList.appendChild(item);
           });
         } catch (error) {
@@ -144,7 +156,10 @@
 
           document.getElementById('user-rank').innerText = `順位: ${userData.rank} 位`;
           document.getElementById('user-points').innerText = `${userData.score}pt`;
-          document.getElementById('user-name').innerText = userData.name;
+
+          const userNameInput = document.getElementById('user-name-input');
+          const savedName = sessionStorage.getItem('userName');
+          userNameInput.value = savedName || userData.name;
         } catch (error) {
           document.getElementById('user-rank').innerText = 'データ取得に失敗しました';
           console.error('ユーザー情報取得エラー:', error);
@@ -153,6 +168,20 @@
 
       fetchRanking(); // ランキングの取得
       fetchUserScore(); // ユーザー情報の取得
+
+      const userNameInput = document.getElementById('user-name-input');
+      userNameInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault(); // フォーム送信を防ぐ
+          sessionStorage.setItem('userName', userNameInput.value);
+          fetchUserScore(userNameInput.value); // ユーザー情報の取得
+        }
+      });
+
+      userNameInput.addEventListener('blur', () => {
+        sessionStorage.setItem('userName', userNameInput.value);
+        fetchUserScore(userNameInput.value); // ユーザー情報の取得
+      });
     </script>
   </body>
 </html>
