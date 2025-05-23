@@ -18,7 +18,14 @@
 			"binding": "KV",
 			"id": "4db677712629475bb40b12e9b35430ab"
 		}
-	]
+	],
+	/**
+	 * 定数
+	 */
+	"vars": {
+		"SEARCH_QUERY": "青空ダイエット部|青空筋トレ部", // Blueskyに送信する検索クエリ
+		"SEARCH_PERIOD_MIN": 600 // 検索期間（※通常はcron設定と合わせる）
+	}
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

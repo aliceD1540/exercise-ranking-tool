@@ -16,6 +16,8 @@ import { Post } from 'data-models';
 
 interface Env {
 	KV: KVNamespace;
+	SEARCH_QUERY: string;
+	SEARCH_PERIOD_MIN: number;
 }
 
 const agent = new BskyAgent({
@@ -99,17 +101,18 @@ export default {
 		untilDate.setMinutes(Math.floor(untilDate.getMinutes() / 5) * 5, 0, 0);
 
 		// sinceはuntilの5分前
-		const sinceDate = new Date(untilDate.getTime() - 5 * 60 * 1000);
+		const sinceDate = new Date(untilDate.getTime() - env.SEARCH_PERIOD_MIN * 60 * 1000);
 		// 【テスト用】1日前までの範囲を指定
 		// const sinceDate = new Date(untilDate.getTime() - 24 * 60 * 60 * 1000);
 		const since = sinceDate.toISOString().replace(/\.\d{3}Z$/, '.000Z');
 		const until = untilDate.toISOString().replace(/\.\d{3}Z$/, '.999Z');
 
 		const apires = await agent.app.bsky.feed.searchPosts({
-			q: '青空ダイエット部|青空筋トレ部',
+			q: env.SEARCH_QUERY,
 			since: since,
 			until: until,
 			sort: 'top',
+			limit: 100, // 【TODO】100件超えたら正しく動かなくなるのでWARNING出したい
 		});
 		// console.log(apires);
 		// dataの中身、postsの一覧をコンソールに出力
