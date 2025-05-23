@@ -93,15 +93,14 @@ export default {
 		// 定期実行の処理をここに書く
 		console.log('Scheduled event triggered');
 
-		// 現在時刻を取得
+		// 現在時刻を取得して、5分単位で切り捨て
 		const now = new Date();
-		// 5分単位で切り捨て
 		const untilDate = new Date(now);
 		untilDate.setMinutes(Math.floor(untilDate.getMinutes() / 5) * 5, 0, 0);
 
 		// sinceはuntilの5分前
 		const sinceDate = new Date(untilDate.getTime() - 5 * 60 * 1000);
-		// テスト用に1日前までの範囲を指定
+		// 【テスト用】1日前までの範囲を指定
 		// const sinceDate = new Date(untilDate.getTime() - 24 * 60 * 60 * 1000);
 		const since = sinceDate.toISOString().replace(/\.\d{3}Z$/, '.000Z');
 		const until = untilDate.toISOString().replace(/\.\d{3}Z$/, '.999Z');
