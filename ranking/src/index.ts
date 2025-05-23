@@ -12,6 +12,7 @@
  */
 
 import { BskyAgent } from '@atproto/api';
+import { KVNamespace } from '@cloudflare/workers-types';
 import { Post } from 'data-models';
 
 interface Env {
