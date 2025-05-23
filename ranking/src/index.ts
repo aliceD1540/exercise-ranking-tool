@@ -11,6 +11,17 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+import { BskyAgent } from '@atproto/api';
+import { Post } from 'data-models';
+
+interface Env {
+	KV: KVNamespace;
+}
+
+const agent = new BskyAgent({
+	service: 'https://api.bsky.app',
+});
+
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		// GET
@@ -55,7 +66,7 @@ export default {
 						'Access-Control-Allow-Headers': 'Content-Type',
 					},
 				});
-			} else {
+			} else if (request.url.match(/\/ranking\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)) {
 				// 指定したアカウントのランキング情報を返す
 				const id = request.url.split('/').pop();
 				// テスト用JSONを返す
@@ -76,6 +87,37 @@ export default {
 		}
 		return new Response('Method Not Allowed', {
 			status: 405,
+		});
+	},
+	async scheduled(event, env, ctx): Promise<void> {
+		// 定期実行の処理をここに書く
+		console.log('Scheduled event triggered');
+
+		// 現在時刻を取得
+		const now = new Date();
+		// 5分単位で切り捨て
+		const untilDate = new Date(now);
+		untilDate.setMinutes(Math.floor(untilDate.getMinutes() / 5) * 5, 0, 0);
+
+		// sinceはuntilの5分前
+		const sinceDate = new Date(untilDate.getTime() - 5 * 60 * 1000);
+		// テスト用に1日前までの範囲を指定
+		// const sinceDate = new Date(untilDate.getTime() - 24 * 60 * 60 * 1000);
+		const since = sinceDate.toISOString().replace(/\.\d{3}Z$/, '.000Z');
+		const until = untilDate.toISOString().replace(/\.\d{3}Z$/, '.999Z');
+
+		const apires = await agent.app.bsky.feed.searchPosts({
+			q: '青空ダイエット部|青空筋トレ部',
+			since: since,
+			until: until,
+		});
+		// console.log(apires);
+		// dataの中身、postsの一覧をコンソールに出力
+		apires.data.posts.forEach((post: Post) => {
+			// postの中身からauthor.handle, author.displayName, record.createdAtをコンソールに出力
+			console.log(`handle: ${post.author.handle}, displayName: ${post.author.displayName}, createdAt: ${post.record.createdAt}`);
+			// handleをキーにしてポスト日時をKVに保存
+			env.KV.put(post.author.handle, post.record.createdAt);
 		});
 	},
 } satisfies ExportedHandler<Env>;
