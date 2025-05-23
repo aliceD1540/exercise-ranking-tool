@@ -109,6 +109,7 @@ export default {
 			q: '青空ダイエット部|青空筋トレ部',
 			since: since,
 			until: until,
+			sort: 'top',
 		});
 		// console.log(apires);
 		// dataの中身、postsの一覧をコンソールに出力
