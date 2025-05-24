@@ -125,5 +125,8 @@ export default {
 			// handleをキーにしてポスト日時をKVに保存
 			env.KV.put(post.author.handle, unixTime.toString());
 		});
+		// 【テスト用】KVに保存したデータ（UNIX時間）を取得、日時に変換してコンソールに出力
+		const date = new Date(Number(await env.KV.get('project-grimoire.dev')));
+		console.log(`project-grimoire.dev: ${date.toISOString()}`);
 	},
 } satisfies ExportedHandler<Env>;
