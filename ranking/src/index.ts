@@ -11,9 +11,9 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { BskyAgent } from '@atproto/api';
+import { Agent } from '@atproto/api';
 import { KVNamespace } from '@cloudflare/workers-types';
-import { Post } from 'data-models';
+import { Post } from './types/data-models';
 
 interface Env {
 	KV: KVNamespace;
@@ -21,7 +21,7 @@ interface Env {
 	SEARCH_PERIOD_MIN: number;
 }
 
-const agent = new BskyAgent({
+const agent = new Agent({
 	service: 'https://api.bsky.app',
 });
 
@@ -117,11 +117,13 @@ export default {
 		});
 		// console.log(apires);
 		// dataの中身、postsの一覧をコンソールに出力
-		apires.data.posts.forEach((post: Post) => {
+		(apires.data.posts as Post[]).forEach((post) => {
 			// postの中身からauthor.handle, author.displayName, record.createdAtをコンソールに出力
-			console.log(`handle: ${post.author.handle}, displayName: ${post.author.displayName}, createdAt: ${post.record.createdAt}`);
+			const displayName = post.author.displayName ?? '';
+			console.log(`handle: ${post.author.handle}, displayName: ${displayName}, createdAt: ${post.record.createdAt}`);
+			const unixTime = new Date(post.record.createdAt).getTime();
 			// handleをキーにしてポスト日時をKVに保存
-			env.KV.put(post.author.handle, post.record.createdAt);
+			env.KV.put(post.author.handle, unixTime.toString());
 		});
 	},
 } satisfies ExportedHandler<Env>;
