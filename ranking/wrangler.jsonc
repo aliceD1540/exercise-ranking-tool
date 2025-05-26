@@ -11,7 +11,11 @@
 		"enabled": true
 	},
 	"triggers": {
-		"crons": ["*/5 * * * *"]
+		// 1件目は記録処理、2件目は集計処理
+		"crons": [
+			"*/5 * * * *", // 5分ごとに実行
+			"0 3 * * *" // 毎日3時に実行
+		]
 	},
 	"kv_namespaces": [
 		{
@@ -20,12 +24,19 @@
 			// "preview_id": "4db677712629475bb40b12e9b35430ab"
 		}
 	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "exercise-ranking-db",
+			"database_id": "3aa513ce-d999-41d9-ab3e-a84e366e105c"
+		}
+	],
 	/**
 	 * 定数
 	 */
 	"vars": {
 		"SEARCH_QUERY": "青空ダイエット部|青空筋トレ部", // Blueskyに送信する検索クエリ
-		"SEARCH_PERIOD_MIN": 600 // 検索期間（※通常はcron設定と合わせる）
+		"SEARCH_PERIOD_MIN": 5 // 検索期間（※通常はcron設定と合わせる）
 	}
 	/**
 	 * Smart Placement

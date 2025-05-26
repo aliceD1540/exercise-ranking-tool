@@ -17,6 +17,7 @@ import { Post } from './types/data-models';
 
 interface Env {
 	KV: KVNamespace;
+	DB: D1Database;
 	SEARCH_QUERY: string;
 	SEARCH_PERIOD_MIN: number;
 }
@@ -93,40 +94,88 @@ export default {
 		});
 	},
 	async scheduled(event, env, ctx): Promise<void> {
-		// 定期実行の処理をここに書く
-		console.log('Scheduled event triggered');
+		if (event.cron === '*/5 * * * *') {
+			// 5分毎にKVへの記録処理を実行
+			console.log('save to KV start.');
 
-		// 現在時刻を取得して、5分単位で切り捨て
-		const now = new Date();
-		const untilDate = new Date(now);
-		untilDate.setMinutes(Math.floor(untilDate.getMinutes() / 5) * 5, 0, 0);
+			// 現在時刻を取得して、5分単位で切り捨て
+			const now = new Date();
+			const untilDate = new Date(now);
+			untilDate.setMinutes(Math.floor(untilDate.getMinutes() / 5) * 5, 0, 0);
 
-		// sinceはuntilの5分前
-		const sinceDate = new Date(untilDate.getTime() - env.SEARCH_PERIOD_MIN * 60 * 1000);
-		// 【テスト用】1日前までの範囲を指定
-		// const sinceDate = new Date(untilDate.getTime() - 24 * 60 * 60 * 1000);
-		const since = sinceDate.toISOString().replace(/\.\d{3}Z$/, '.000Z');
-		const until = untilDate.toISOString().replace(/\.\d{3}Z$/, '.999Z');
+			// sinceはuntilの{SEARCH_PERIOD_MIN}分前
+			const sinceDate = new Date(untilDate.getTime() - env.SEARCH_PERIOD_MIN * 60 * 1000);
+			const since = sinceDate.toISOString().replace(/\.\d{3}Z$/, '.000Z');
+			const until = untilDate.toISOString().replace(/\.\d{3}Z$/, '.999Z');
 
-		const apires = await agent.app.bsky.feed.searchPosts({
-			q: env.SEARCH_QUERY,
-			since: since,
-			until: until,
-			sort: 'top',
-			limit: 100, // 【TODO】100件超えたら正しく動かなくなるのでWARNING出したい
-		});
-		// console.log(apires);
-		// dataの中身、postsの一覧をコンソールに出力
-		(apires.data.posts as Post[]).forEach((post) => {
-			// postの中身からauthor.handle, author.displayName, record.createdAtをコンソールに出力
-			const displayName = post.author.displayName ?? '';
-			console.log(`handle: ${post.author.handle}, displayName: ${displayName}, createdAt: ${post.record.createdAt}`);
-			const unixTime = new Date(post.record.createdAt).getTime();
-			// handleをキーにしてポスト日時をKVに保存
-			env.KV.put(post.author.handle, unixTime.toString());
-		});
-		// 【テスト用】KVに保存したデータ（UNIX時間）を取得、日時に変換してコンソールに出力
-		const date = new Date(Number(await env.KV.get('project-grimoire.dev')));
-		console.log(`project-grimoire.dev: ${date.toISOString()}`);
+			const apires = await agent.app.bsky.feed.searchPosts({
+				q: env.SEARCH_QUERY,
+				since: since,
+				until: until,
+				sort: 'top',
+				limit: 100, // 【TODO】100件超えたら正しく動かなくなるのでWARNING出したい
+			});
+			(apires.data.posts as Post[]).forEach((post) => {
+				// postの中身からauthor.handle, author.displayName, record.createdAtをコンソールに出力
+				const displayName = post.author.displayName ?? '';
+				console.log(`handle: ${post.author.handle}, displayName: ${displayName}, createdAt: ${post.record.createdAt}`);
+				const unixTime = new Date(post.record.createdAt).getTime();
+				// handleをキーにしてポスト日時をKVに保存
+				env.KV.put(post.author.handle, unixTime.toString());
+			});
+			// 【動作確認用】KVに保存したデータ（UNIX時間）を取得、日時に変換してコンソールに出力
+			const date = new Date(Number(await env.KV.get('project-grimoire.dev')));
+			console.log(`project-grimoire.dev: ${date.toISOString()}`);
+		} else if (event.cron === '0 3 * * *') {
+			// 毎日3時にランキングを集計してDBに保存
+			console.log('Daily ranking aggregation start.');
+			// KVから全てのキーを取得
+			const keys = await env.KV.list();
+			// keysのキー名を使ってD1のrankingテーブルを検索
+			const handleList = keys.keys.map((key) => key.name);
+			let result;
+			if (handleList.length > 0) {
+				result = await env.DB.prepare(`SELECT bsky_handle FROM ranking WHERE bsky_handle IN (${handleList.map(() => '?').join(',')})`)
+					.bind(...handleList)
+					.all();
+			} else {
+				result = { results: [] };
+			}
+			// resultに含まれない項目をINSERTするためのキーを抽出
+			const existingHandles = new Set(result.results.map((row) => row.bsky_handle));
+			// resultに含まれない項目を抽出
+			const newKeys = keys.keys.filter((key) => !existingHandles.has(key.name));
+
+			// resultに含まれない項目をINSERT
+			const insertPromises = newKeys.map(async (key) => {
+				const value = await env.KV.get(key.name);
+				if (value) {
+					const unixTime = Number(value);
+					const date = new Date(unixTime);
+					// console.log(key.name, unixTime);
+					const formattedDate = date.toISOString().replace(/\.\d{3}Z$/, '.000Z');
+					// BlueskyのAPIを叩いてdid, display_name, icon_urlを取得する
+					const profile = await agent.app.bsky.actor.getProfile({ actor: key.name });
+
+					// INSERT文を実行
+					await env.DB.prepare(
+						'INSERT INTO ranking (bsky_did, bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at) VALUES (?, ?, ?, ?, ?, 0, ?)'
+					)
+						.bind(
+							profile.data.did,
+							key.name, // bsky_handle
+							profile.data.displayName,
+							profile.data.avatar,
+							1, // スコアは1で初期化
+							formattedDate // last_updated_at
+						)
+						// .bind(key.name, 0, formattedDate) // スコアは0で初期化
+						.run();
+				}
+			});
+			await Promise.all(insertPromises);
+
+			// 【TODO】resultに含まれる項目のスコア更新
+		}
 	},
 } satisfies ExportedHandler<Env>;
