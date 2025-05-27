@@ -30,7 +30,8 @@ export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		// GET
 		if (request.method === 'GET') {
-			if (request.url.endsWith('/ranking')) {
+			const pathname = new URL(request.url).pathname;
+			if (pathname === '/ranking') {
 				// ランキング情報を返す
 				env.DB.prepare(
 					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at FROM ranking ORDER BY score DESC LIMIT 100`
