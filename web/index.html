@@ -133,8 +133,10 @@
                         <div class="rank">${entry.rank}</div>
                         <div class="name">
                             ${medalIcon ? `<span class="medal">${medalIcon}</span>` : ''}
-                            <img src="./icon_sample.png" alt="SNSアイコン" class="sns-icon">
-                            ${entry.name}
+                            <img src="${entry.icon_url}" alt="SNSアイコン" class="sns-icon">
+                            <a href="https://bsky.app/profile/${entry.account}" target="_blank">${
+              entry.name
+            }</a>
                         </div>
                         <div class="points">${entry.score}pt</div>
                     `;
@@ -147,17 +149,22 @@
         }
       }
 
-      async function fetchUserScore() {
+      async function fetchUserScore(userName) {
         try {
+          if (!userName) {
+            userName = sessionStorage.getItem('userName') || '';
+          }
           const response = await fetch(
-            'https://exercise-ranking.grimoire13th.workers.dev/ranking/my_account'
+            `https://exercise-ranking.grimoire13th.workers.dev/ranking/${encodeURIComponent(
+              userName
+            )}`
           );
+          const userNameInput = document.getElementById('user-name-input');
           const userData = await response.json();
 
           document.getElementById('user-rank').innerText = `順位: ${userData.rank} 位`;
           document.getElementById('user-points').innerText = `${userData.score}pt`;
 
-          const userNameInput = document.getElementById('user-name-input');
           const savedName = sessionStorage.getItem('userName');
           userNameInput.value = savedName || userData.name;
         } catch (error) {
