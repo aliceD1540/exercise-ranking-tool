@@ -33,29 +33,26 @@ export default {
 			const pathname = new URL(request.url).pathname;
 			if (pathname === '/ranking') {
 				// ランキング情報を返す
-				env.DB.prepare(
+				const result = await env.DB.prepare(
 					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at FROM ranking ORDER BY score DESC LIMIT 100`
-				)
-					.all()
-					.then((result) => {
-						const ranking = result.results.map((row, index) => ({
-							rank: index + 1,
-							name: row.bsky_display_name,
-							account: row.bsky_handle,
-							score: row.score,
-							score_accumulated: row.score_accumulated,
-							icon_url: row.bsky_icon_url,
-						}));
-						const json = { ranking };
-						return new Response(JSON.stringify(json), {
-							headers: {
-								'Content-Type': 'application/json',
-								'Access-Control-Allow-Origin': '*',
-								'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-								'Access-Control-Allow-Headers': 'Content-Type',
-							},
-						});
-					});
+				).all();
+				const ranking = result.results.map((row, index) => ({
+					rank: index + 1,
+					name: row.bsky_display_name,
+					account: row.bsky_handle,
+					score: row.score,
+					score_accumulated: row.score_accumulated,
+					icon_url: row.bsky_icon_url,
+				}));
+				const json = { ranking };
+				return new Response(JSON.stringify(json), {
+					headers: {
+						'Content-Type': 'application/json',
+						'Access-Control-Allow-Origin': '*',
+						'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+						'Access-Control-Allow-Headers': 'Content-Type',
+					},
+				});
 			} else if (request.url.match(/\/ranking\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)) {
 				// 指定したアカウントのランキング情報を返す
 				const account = request.url.split('/').pop();
