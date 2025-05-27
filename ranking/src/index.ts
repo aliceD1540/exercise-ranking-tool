@@ -159,7 +159,7 @@ export default {
 
 					// INSERT文を実行
 					await env.DB.prepare(
-						'INSERT INTO ranking (bsky_did, bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at) VALUES (?, ?, ?, ?, ?, 0, ?)'
+						'INSERT INTO ranking (bsky_did, bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
 					)
 						.bind(
 							profile.data.did,
@@ -167,15 +167,32 @@ export default {
 							profile.data.displayName,
 							profile.data.avatar,
 							1, // スコアは1で初期化
+							1, // スコア累積は1で初期化
 							formattedDate // last_updated_at
 						)
-						// .bind(key.name, 0, formattedDate) // スコアは0で初期化
 						.run();
 				}
 			});
 			await Promise.all(insertPromises);
 
-			// 【TODO】resultに含まれる項目のスコア更新
+			// resultでループして含まれる項目のスコア更新
+			const updatePromises = result.results.map(async (row) => {
+				const handle = String(row.bsky_handle);
+				const value = await env.KV.get(handle);
+				// valueはUNIX時間の文字列、24時間以内に更新されたもののみスコアを更新
+				if (value && new Date(Number(value)) > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+					const unixTime = Number(value);
+					const date = new Date(unixTime);
+					const formattedDate = date.toISOString().replace(/\.\d{3}Z$/, '.000Z');
+					// スコアを1増やして、スコア累積も1増やす
+					await env.DB.prepare(
+						'UPDATE ranking SET score = score + 1, score_accumulated = score_accumulated + 1, last_updated_at = ? WHERE bsky_handle = ?'
+					)
+						.bind(formattedDate, handle)
+						.run();
+				}
+			});
+			await Promise.all(updatePromises);
 		}
 	},
 } satisfies ExportedHandler<Env>;
