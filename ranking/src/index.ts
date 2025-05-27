@@ -126,8 +126,8 @@ export default {
 			// 【動作確認用】KVに保存したデータ（UNIX時間）を取得、日時に変換してコンソールに出力
 			const date = new Date(Number(await env.KV.get('project-grimoire.dev')));
 			console.log(`project-grimoire.dev: ${date.toISOString()}`);
-		} else if (event.cron === '0 3 * * *') {
-			// 毎日3時にランキングを集計してDBに保存
+		} else if (event.cron === '0 18 * * *') {
+			// 毎日18時(日本時間で3時)にランキングを集計してDBに保存
 			console.log('Daily ranking aggregation start.');
 			// KVから全てのキーを取得
 			const keys = await env.KV.list();
