@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bluesky Workout Rankings</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(to bottom, #f8f8f8, #e0e0ff);
+        text-align: center;
+        padding: 20px;
+        min-height: 100vh; /* 縞模様対策として背景を広くする */
+      }
+      .container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .ranking-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        max-width: 900px;
+        width: 100%;
+      }
+      .user-info {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        max-width: 300px;
+        text-align: center;
+        position: fixed;
+        right: 20px;
+        top: 20px;
+      }
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column-reverse;
+          align-items: center;
+        }
+        .user-info {
+          position: static;
+          margin-bottom: 20px;
+          max-width: 100%;
+        }
+      }
+      .ranking-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+      }
+      .rank {
+        width: 40px;
+        font-weight: bold;
+      }
+      .sns-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+      }
+      .name {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        text-align: left;
+      }
+      .points {
+        font-weight: bold;
+        font-size: 1.1em;
+        color: #333;
+      }
+      .name-input {
+        width: 100%;
+        padding: 10px;
+        font-size: 1.1em;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        text-align: center;
+        display: block;
+        margin-top: 10px;
+      }
+      .tag-list {
+        display: inline-block;
+        border: 1px solid #aaa;
+        border-radius: 6px;
+        padding: 12px 24px;
+        background: #f8f8ff;
+        margin: 8px 0;
+      }
+      .tag-list li {
+        list-style: none;
+        border-bottom: 1px solid #ccc;
+        padding: 8px 0;
+      }
+      .tag-list li:last-child {
+        border-bottom: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h2 style="color: #444; font-size: 24px; font-weight: bold">
+      🏆 Bluesky Workout Rankings 🏆【開発中】
+    </h2>
+    <p>
+      本サービスは現在開発中です。<br />
+      不定期にリセットされたり、ランキングルールが調整される場合があります。<br />
+      その点をご了承ください。<br />
+    </p>
+    <div class="container">
+      <div class="ranking-container">
+        本サービスは、Bluesky上のトレーニング投稿をランキング形式で表示します。
+        <h2>基本機能</h2>
+        Blueskyから特定タグを含む投稿を取得し、ランキングを生成します。
+        <h2>コンセプト</h2>
+        <p>
+          トレーニングを継続するためのモチベーションを高めることを目的としています。<br />
+          負荷の高い低いは関係なく、トレーニングを継続的に行っていることを評価する方針です。<br />
+          トレーニングを行ったことを投稿することで、ポイントが加算され、ランキングに反映されます。
+        </p>
+        <h2>ランキングルール</h2>
+        <p>
+          投稿に含まれるトレーニングタグを基にポイントを付与<br />
+          現在設定中の対象タグは以下の通りです<br />
+          <ul class="tag-list">
+          <li class="tag">#青空ダイエット部</li>
+          <li class="tag">#青空筋トレ部</li>
+          </ul><br />
+          報告のポストを行うと1日1ポイント加算<br />
+          <s>トレーニングをサボった（投稿しなかった）日が続くとポイント減算orリセット</s
+          >（を実装予定、増減値は検討中）<br />
+          ランキングは1日1回、深夜3時（日本時間）に更新されます<br />
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
