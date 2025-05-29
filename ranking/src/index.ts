@@ -40,20 +40,22 @@ export default {
 				let prevScore = 0;
 				let prevRank = 0;
 				let count = 0;
+				let displayRank = 1; // 表示用のrank
 				for (const row of result.results) {
 					count++;
-					if (row.score !== prevScore) {
-						prevRank = count;
+					if (prevScore === null || row.score !== prevScore) {
+						displayRank = prevRank + 1;
 						prevScore = Number(row.score);
 					}
 					ranking.push({
-						rank: prevRank,
+						rank: displayRank,
 						name: row.bsky_display_name,
 						account: row.bsky_handle,
 						score: Number(row.score),
 						score_accumulated: Number(row.score_accumulated),
 						icon_url: row.bsky_icon_url,
 					});
+					prevRank = displayRank;
 				}
 				const json = { ranking };
 				return new Response(JSON.stringify(json), {
