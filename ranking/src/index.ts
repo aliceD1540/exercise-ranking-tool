@@ -76,7 +76,7 @@ export default {
 					.first();
 				// 指定アカウントのスコアが何番目に高いものかを取得
 				const rankResult = await env.DB.prepare(
-					`SELECT rank FROM (SELECT ROW_NUMBER() OVER () AS rank, score FROM ranking GROUP BY score ORDER BY score) WHERE score = (SELECT score FROM ranking WHERE bsky_handle = ? LIMIT 1)`
+					`SELECT rank FROM (SELECT ROW_NUMBER() OVER (ORDER BY score DESC) AS rank, score FROM ranking GROUP BY score) WHERE score = (SELECT score FROM ranking WHERE bsky_handle = ? LIMIT 1)`
 				)
 					.bind(account)
 					.first();
