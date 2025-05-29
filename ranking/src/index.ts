@@ -36,14 +36,25 @@ export default {
 				const result = await env.DB.prepare(
 					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at FROM ranking ORDER BY score DESC LIMIT 100`
 				).all();
-				const ranking = result.results.map((row, index) => ({
-					rank: index + 1,
-					name: row.bsky_display_name,
-					account: row.bsky_handle,
-					score: row.score,
-					score_accumulated: row.score_accumulated,
-					icon_url: row.bsky_icon_url,
-				}));
+				const ranking = [];
+				let prevScore = 0;
+				let prevRank = 0;
+				let count = 0;
+				for (const row of result.results) {
+					count++;
+					if (row.score !== prevScore) {
+						prevRank = count;
+						prevScore = Number(row.score);
+					}
+					ranking.push({
+						rank: prevRank,
+						name: row.bsky_display_name,
+						account: row.bsky_handle,
+						score: Number(row.score),
+						score_accumulated: Number(row.score_accumulated),
+						icon_url: row.bsky_icon_url,
+					});
+				}
 				const json = { ranking };
 				return new Response(JSON.stringify(json), {
 					headers: {
@@ -56,17 +67,25 @@ export default {
 			} else if (request.url.match(/\/ranking\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)) {
 				// 指定したアカウントのランキング情報を返す
 				const account = request.url.split('/').pop();
-				const json = await env.DB.prepare(
+				const result = await env.DB.prepare(
 					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at FROM ranking WHERE bsky_handle = ?`
 				)
 					.bind(account)
 					.first();
-				if (!json) {
+				// 指定アカウントのスコアが何番目に高いものかを取得
+				const rankResult = await env.DB.prepare(
+					`SELECT rank FROM (SELECT ROW_NUMBER() OVER () AS rank, score FROM ranking GROUP BY score ORDER BY score) WHERE score = (SELECT score FROM ranking WHERE bsky_handle = ? LIMIT 1)`
+				)
+					.bind(account)
+					.first();
+				if (!result) {
 					return new Response('Not Found', {
 						status: 404,
 					});
 				}
-				return new Response(JSON.stringify(json), {
+				// rankResultを順位としてresultに追加
+				result['rank'] = rankResult ? rankResult.rank : null;
+				return new Response(JSON.stringify(result), {
 					headers: {
 						'Content-Type': 'application/json',
 						'Access-Control-Allow-Origin': '*',

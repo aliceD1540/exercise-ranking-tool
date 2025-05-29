@@ -99,7 +99,7 @@
         <p id="user-rank">データ取得中...</p>
         <div class="ranking-item">
           <div class="icon">
-            <img src="./icon_sample.png" alt="トレーニングアイコン" width="40" />
+            <img id="user-icon" src="./icon_sample.png" alt="トレーニングアイコン" width="40" />
           </div>
           <div class="name">
             <input
@@ -164,6 +164,9 @@
 
           document.getElementById('user-rank').innerText = `順位: ${userData.rank} 位`;
           document.getElementById('user-points').innerText = `${userData.score}pt`;
+          document.getElementById('user-icon').src = `${
+            userData.bsky_icon_url || './icon_sample.png'
+          }`;
 
           const savedName = sessionStorage.getItem('userName');
           userNameInput.value = savedName || userData.name;
