@@ -132,8 +132,8 @@ export default {
 				env.KV.put(post.author.handle, unixTime.toString());
 			});
 			// 【動作確認用】KVに保存したデータ（UNIX時間）を取得、日時に変換してコンソールに出力
-			const date = new Date(Number(await env.KV.get('project-grimoire.dev')));
-			console.log(`project-grimoire.dev: ${date.toISOString()}`);
+			// const date = new Date(Number(await env.KV.get('project-grimoire.dev')));
+			// console.log(`project-grimoire.dev: ${date.toISOString()}`);
 		} else if (event.cron === '0 18 * * *') {
 			// 毎日18時(日本時間で3時)にランキングを集計してDBに保存
 			console.log('Daily ranking aggregation start.');
@@ -141,6 +141,7 @@ export default {
 			const keys = await env.KV.list();
 			// keysのキー名を使ってD1のrankingテーブルを検索
 			const handleList = keys.keys.map((key) => key.name).filter(Boolean);
+			console.log(`handleList: ${JSON.stringify(handleList)}`);
 			let result;
 			if (handleList.length > 0) {
 				result = await env.DB.prepare(`SELECT bsky_handle FROM ranking WHERE bsky_handle IN (${handleList.map(() => '?').join(',')})`)
@@ -149,6 +150,7 @@ export default {
 			} else {
 				result = { results: [] };
 			}
+			console.log(`result: ${JSON.stringify(result)}`);
 			// resultに含まれない項目をINSERTするためのキーを抽出
 			const existingHandles = new Set(result.results.map((row) => row.bsky_handle));
 			// resultに含まれない項目を抽出
