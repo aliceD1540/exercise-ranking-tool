@@ -201,6 +201,15 @@ export default {
 						.bind(formattedDate, handle)
 						.run();
 				}
+				// 48時間以上更新されていない場合はスコアを-1（マイナスにはならない）、スコア累積はそのまま
+				else if (value && new Date(Number(value)) < new Date(Date.now() - 48 * 60 * 60 * 1000)) {
+					const unixTime = Number(value);
+					const date = new Date(unixTime);
+					const formattedDate = date.toISOString().replace(/\.\d{3}Z$/, '.000Z');
+					await env.DB.prepare('UPDATE ranking SET score = MAX(score - 1, 0), last_updated_at = ? WHERE bsky_handle = ?')
+						.bind(formattedDate, handle)
+						.run();
+				}
 			});
 			await Promise.all(updatePromises);
 		}
