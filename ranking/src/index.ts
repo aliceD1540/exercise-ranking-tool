@@ -140,7 +140,7 @@ export default {
 			// KVから全てのキーを取得
 			const keys = await env.KV.list();
 			// keysのキー名を使ってD1のrankingテーブルを検索
-			const handleList = keys.keys.map((key) => key.name);
+			const handleList = keys.keys.map((key) => key.name).filter(Boolean);
 			let result;
 			if (handleList.length > 0) {
 				result = await env.DB.prepare(`SELECT bsky_handle FROM ranking WHERE bsky_handle IN (${handleList.map(() => '?').join(',')})`)
@@ -170,10 +170,10 @@ export default {
 						'INSERT INTO ranking (bsky_did, bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
 					)
 						.bind(
-							profile.data.did,
-							key.name, // bsky_handle
-							profile.data.displayName,
-							profile.data.avatar,
+							profile.data.did ?? '',
+							key.name ?? '', // bsky_handle
+							profile.data.displayName ?? '',
+							profile.data.avatar ?? '',
 							1, // スコアは1で初期化
 							1, // スコア累積は1で初期化
 							formattedDate // last_updated_at
