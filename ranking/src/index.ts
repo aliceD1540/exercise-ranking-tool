@@ -126,10 +126,12 @@ export default {
 			(apires.data.posts as Post[]).forEach((post) => {
 				// postの中身からauthor.handle, author.displayName, record.createdAtをコンソールに出力
 				const displayName = post.author.displayName ?? '';
-				console.log(`handle: ${post.author.handle}, displayName: ${displayName}, createdAt: ${post.record.createdAt}`);
+				console.log(
+					`handle: ${post.author.handle}, displayName: ${displayName}, did: ${post.author.did}, createdAt: ${post.record.createdAt}`
+				);
 				const unixTime = new Date(post.record.createdAt).getTime();
-				// handleをキーにしてポスト日時をKVに保存
-				env.KV.put(post.author.handle, unixTime.toString());
+				// didをキーにしてポスト日時をKVに保存
+				env.KV.put(post.author.did, unixTime.toString());
 			});
 			// 【動作確認用】KVに保存したデータ（UNIX時間）を取得、日時に変換してコンソールに出力
 			// const date = new Date(Number(await env.KV.get('project-grimoire.dev')));
@@ -144,7 +146,7 @@ export default {
 			console.log(`handleList: ${JSON.stringify(handleList)}`);
 			let result;
 			if (handleList.length > 0) {
-				result = await env.DB.prepare(`SELECT bsky_handle FROM ranking WHERE bsky_handle IN (${handleList.map(() => '?').join(',')})`)
+				result = await env.DB.prepare(`SELECT bsky_did FROM ranking WHERE bsky_did IN (${handleList.map(() => '?').join(',')})`)
 					.bind(...handleList)
 					.all();
 			} else {
@@ -152,7 +154,7 @@ export default {
 			}
 			console.log(`result: ${JSON.stringify(result)}`);
 			// resultに含まれない項目をINSERTするためのキーを抽出
-			const existingHandles = new Set(result.results.map((row) => row.bsky_handle));
+			const existingHandles = new Set(result.results.map((row) => row.bsky_did));
 			// resultに含まれない項目を抽出
 			const newKeys = keys.keys.filter((key) => !existingHandles.has(key.name));
 
@@ -164,7 +166,7 @@ export default {
 					const date = new Date(unixTime);
 					// console.log(key.name, unixTime);
 					const formattedDate = date.toISOString().replace(/\.\d{3}Z$/, '.000Z');
-					// BlueskyのAPIを叩いてdid, display_name, icon_urlを取得する
+					// BlueskyのAPIを叩いてhandle, display_name, icon_urlを取得する
 					const profile = await agent.app.bsky.actor.getProfile({ actor: key.name });
 
 					// INSERT文を実行
@@ -172,8 +174,8 @@ export default {
 						'INSERT INTO ranking (bsky_did, bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
 					)
 						.bind(
-							profile.data.did ?? '',
-							key.name ?? '', // bsky_handle
+							key.name ?? '',
+							profile.data.handle ?? '', // bsky_handle
 							profile.data.displayName ?? '',
 							profile.data.avatar ?? '',
 							1, // スコアは1で初期化
@@ -187,18 +189,21 @@ export default {
 
 			// resultでループして含まれる項目のスコア更新
 			const updatePromises = result.results.map(async (row) => {
-				const handle = String(row.bsky_handle);
-				const value = await env.KV.get(handle);
+				const did = String(row.bsky_did);
+				const value = await env.KV.get(did);
 				// valueはUNIX時間の文字列、24時間以内に更新されたもののみスコアを更新
 				if (value && new Date(Number(value)) > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
 					const unixTime = Number(value);
 					const date = new Date(unixTime);
 					const formattedDate = date.toISOString().replace(/\.\d{3}Z$/, '.000Z');
+					// BlueskyのAPIを叩いてhandle, display_name, icon_urlを取得する
+					const profile = await agent.app.bsky.actor.getProfile({ actor: did });
 					// スコアを1増やして、スコア累積も1増やす
+					// ついでにhandle,display_name,icon_urlも最新化
 					await env.DB.prepare(
-						'UPDATE ranking SET score = score + 1, score_accumulated = score_accumulated + 1, last_updated_at = ? WHERE bsky_handle = ?'
+						'UPDATE ranking SET score = score + 1, score_accumulated = score_accumulated + 1, last_updated_at = ?, bsky_handle = ?, bsky_display_name = ?, bsky_icon_url = ? WHERE bsky_did = ?'
 					)
-						.bind(formattedDate, handle)
+						.bind(formattedDate, profile.data.handle ?? '', profile.data.displayName ?? '', profile.data.avatar ?? '', did)
 						.run();
 				}
 				// 48時間以上更新されていない場合はスコアを-1（マイナスにはならない）、スコア累積はそのまま
@@ -206,8 +211,8 @@ export default {
 					const unixTime = Number(value);
 					const date = new Date(unixTime);
 					const formattedDate = date.toISOString().replace(/\.\d{3}Z$/, '.000Z');
-					await env.DB.prepare('UPDATE ranking SET score = MAX(score - 1, 0), last_updated_at = ? WHERE bsky_handle = ?')
-						.bind(formattedDate, handle)
+					await env.DB.prepare('UPDATE ranking SET score = MAX(score - 1, 0), last_updated_at = ? WHERE bsky_did = ?')
+						.bind(formattedDate, did)
 						.run();
 				}
 			});
