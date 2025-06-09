@@ -123,16 +123,16 @@ export default {
 				sort: 'top',
 				limit: 100, // 【TODO】100件超えたら正しく動かなくなるのでWARNING出したい
 			});
-			(apires.data.posts as Post[]).forEach((post) => {
-				// postの中身からauthor.handle, author.displayName, record.createdAtをコンソールに出力
-				const displayName = post.author.displayName ?? '';
-				console.log(
-					`handle: ${post.author.handle}, displayName: ${displayName}, did: ${post.author.did}, createdAt: ${post.record.createdAt}`
-				);
-				const unixTime = new Date(post.record.createdAt).getTime();
-				// didをキーにしてポスト日時をKVに保存
-				env.KV.put(post.author.did, unixTime.toString());
-			});
+			await Promise.all(
+				(apires.data.posts as Post[]).map(async (post) => {
+					const displayName = post.author.displayName ?? '';
+					console.log(
+						`handle: ${post.author.handle}, displayName: ${displayName}, did: ${post.author.did}, createdAt: ${post.record.createdAt}`
+					);
+					const unixTime = new Date(post.record.createdAt).getTime();
+					await env.KV.put(post.author.did, unixTime.toString());
+				})
+			);
 			// 【動作確認用】KVに保存したデータ（UNIX時間）を取得、日時に変換してコンソールに出力
 			// const date = new Date(Number(await env.KV.get('project-grimoire.dev')));
 			// console.log(`project-grimoire.dev: ${date.toISOString()}`);
