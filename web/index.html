@@ -85,6 +85,22 @@
         display: block;
         margin-top: 10px;
       }
+      .tooltip {
+        position: absolute;
+        z-index: 1000;
+        background: #fff;
+        color: #222;
+        border: 1px solid #aaa;
+        border-radius: 8px;
+        padding: 10px 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        font-size: 0.95em;
+        pointer-events: none;
+        white-space: pre-line;
+        min-width: 180px;
+        max-width: 320px;
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -124,26 +140,77 @@
           rankingList.innerHTML = '';
 
           rankingData.ranking.forEach((entry) => {
-            let medalIcon = ''; // メダルアイコンの初期値
+            let medalIcon = '';
             if (entry.rank === 1) medalIcon = '🥇';
             else if (entry.rank === 2) medalIcon = '🥈';
             else if (entry.rank === 3) medalIcon = '🥉';
 
             const item = document.createElement('div');
             item.className = 'ranking-item';
+
+            // entry情報をdata属性としてJSONで埋め込む
+            const entryData = {
+              アカウント: entry.account,
+              名前: entry.name,
+              スコア: entry.score,
+              累計スコア: entry.score_accumulated || 0,
+              日付: entry.date || '', // 日付項目があれば
+              コメント: entry.comment || '', // コメント項目があれば
+            };
+
             item.innerHTML = `
-                        <div class="rank">${entry.rank}</div>
-                        <div class="name">
-                            ${medalIcon ? `<span class="medal">${medalIcon}</span>` : ''}
-                            <img src="${entry.icon_url}" alt="SNSアイコン" class="sns-icon">
-                            <a href="https://bsky.app/profile/${entry.account}" target="_blank">${
+                <div class="rank">${entry.rank}</div>
+                <div class="name" data-entry='${JSON.stringify(entryData)}'>
+                    ${medalIcon ? `<span class="medal">${medalIcon}</span>` : ''}
+                    <img src="${entry.icon_url}" alt="SNSアイコン" class="sns-icon">
+                    <a href="https://bsky.app/profile/${entry.account}" target="_blank">${
               entry.name
             }</a>
-                        </div>
-                        <div class="points">${entry.score}pt</div>
-                    `;
+                </div>
+                <div class="points">${entry.score}pt</div>
+                `;
             rankingList.appendChild(item);
           });
+
+          // ツールチップ要素をbody直下に追加
+          let tooltip = document.getElementById('entry-tooltip');
+          if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'entry-tooltip';
+            tooltip.className = 'tooltip';
+            document.body.appendChild(tooltip);
+          }
+
+          // マウスオーバーイベントを設定
+          document.addEventListener('mouseover', function (e) {
+            const nameDiv = e.target.closest('.name[data-entry]');
+            if (nameDiv) {
+              const entry = JSON.parse(nameDiv.getAttribute('data-entry'));
+              let html = '';
+              for (const key in entry) {
+                if (entry[key]) {
+                  html += `<b>${key}:</b> ${entry[key]}<br>`;
+                }
+              }
+              tooltip.innerHTML = html;
+              tooltip.style.display = 'block';
+              // マウス位置にツールチップを表示
+              document.addEventListener('mousemove', moveTooltip);
+            }
+          });
+
+          document.addEventListener('mouseout', function (e) {
+            const nameDiv = e.target.closest('.name[data-entry]');
+            if (nameDiv) {
+              tooltip.style.display = 'none';
+              document.removeEventListener('mousemove', moveTooltip);
+            }
+          });
+
+          function moveTooltip(e) {
+            tooltip.style.left = e.pageX + 16 + 'px';
+            tooltip.style.top = e.pageY + 12 + 'px';
+          }
         } catch (error) {
           document.getElementById('ranking-list').innerHTML =
             'ランキングデータ取得に失敗しました。';
