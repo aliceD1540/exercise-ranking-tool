@@ -48,7 +48,7 @@ export default {
 						prevScore = Number(row.score);
 					}
 					// デフォルトでは名前やアカウント名を伏せる
-					if (row.is_visible) {
+					if (!row.is_visible) {
 						ranking.push({
 							rank: displayRank,
 							name: '********',
