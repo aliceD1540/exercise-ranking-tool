@@ -152,7 +152,7 @@
             const entryData = {
               アカウント: entry.account,
               名前: entry.name,
-              スコア: entry.score,
+              スコア: entry.score || 0,
               累計スコア: entry.score_accumulated || 0,
               日付: entry.date || '', // 日付項目があれば
               コメント: entry.comment || '', // コメント項目があれば
@@ -163,9 +163,11 @@
                 <div class="name" data-entry='${JSON.stringify(entryData)}'>
                     ${medalIcon ? `<span class="medal">${medalIcon}</span>` : ''}
                     <img src="${entry.icon_url}" alt="SNSアイコン" class="sns-icon">
-                    <a href="https://bsky.app/profile/${entry.account}" target="_blank">${
-              entry.name
-            }</a>
+                    ${
+                      entry.name === '********'
+                        ? entry.name
+                        : `<a href="https://bsky.app/profile/${entry.account}" target="_blank">${entry.name}</a>`
+                    }
                 </div>
                 <div class="points">${entry.score}pt</div>
                 `;

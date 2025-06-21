@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS ranking (
     bsky_icon_url TEXT NOT NULL,
     score INTEGER NOT NULL,
     score_accumulated INTEGER NOT NULL,
-    last_updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    last_updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_visible INTEGER NOT NULL DEFAULT 0,
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bsky_did ON ranking (bsky_did);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bsky_handle ON ranking (bsky_handle);

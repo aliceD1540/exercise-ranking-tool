@@ -34,7 +34,7 @@ export default {
 			if (pathname === '/ranking') {
 				// ランキング情報を返す
 				const result = await env.DB.prepare(
-					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at FROM ranking ORDER BY score DESC LIMIT 100`
+					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at, is_visible FROM ranking ORDER BY score DESC LIMIT 100`
 				).all();
 				const ranking = [];
 				let prevScore = 0;
@@ -47,14 +47,27 @@ export default {
 						displayRank = prevRank + 1;
 						prevScore = Number(row.score);
 					}
-					ranking.push({
-						rank: displayRank,
-						name: row.bsky_display_name,
-						account: row.bsky_handle,
-						score: Number(row.score),
-						score_accumulated: Number(row.score_accumulated),
-						icon_url: row.bsky_icon_url,
-					});
+					// デフォルトでは名前やアカウント名を伏せる
+					if (row.is_visible) {
+						ranking.push({
+							rank: displayRank,
+							name: '********',
+							account: '********',
+							score: Number(row.score),
+							score_accumulated: Number(row.score_accumulated),
+							icon_url: 'https://r2.project-grimoire.dev/workout-ranking/anon_icon_fitness.png',
+						});
+					} else {
+						ranking.push({
+							rank: displayRank,
+							name: row.bsky_display_name,
+							account: row.bsky_handle,
+							score: Number(row.score),
+							score_accumulated: Number(row.score_accumulated),
+							icon_url: row.bsky_icon_url,
+						});
+					}
+
 					prevRank = displayRank;
 				}
 				const json = { ranking };
@@ -70,7 +83,7 @@ export default {
 				// 指定したアカウントのランキング情報を返す
 				const account = request.url.split('/').pop();
 				const result = await env.DB.prepare(
-					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at FROM ranking WHERE bsky_handle = ?`
+					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at, is_visible FROM ranking WHERE bsky_handle = ?`
 				)
 					.bind(account)
 					.first();
@@ -80,7 +93,8 @@ export default {
 				)
 					.bind(account)
 					.first();
-				if (!result) {
+				if (!result || !result.is_visible) {
+					// アカウントが見つからない、または表示を許可していない場合は404を返す
 					return new Response('Not Found', {
 						status: 404,
 					});
