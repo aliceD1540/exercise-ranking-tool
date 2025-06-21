@@ -79,7 +79,7 @@ export default {
 						'Access-Control-Allow-Headers': 'Content-Type',
 					},
 				});
-			} else if (request.url.match(/\/ranking\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)) {
+			} else if (new URL(request.url).pathname.match(/^\/ranking\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
 				// 指定したアカウントのランキング情報を返す
 				const account = request.url.split('/').pop();
 				const result = await env.DB.prepare(

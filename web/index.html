@@ -108,7 +108,8 @@
       🏆 Bluesky Workout Rankings 🏆【開発中】
     </h2>
     <p><a href="./about.html" target="_blank">about this.</a></p>
-    <input type="checkbox" id="show-hidden" checked /> 匿名ユーザを表示しない
+    <input type="checkbox" id="hide-anon" checked />
+    <label for="hide-anon">匿名ユーザを表示しない</label>
     <div class="container">
       <div class="ranking-container">
         <div id="ranking-list">データ取得中...</div>
@@ -138,13 +139,13 @@
     <a href="https://github.com/aliceD1540/exercise-ranking-tool/" target="_blank">GitHub</a>.
 
     <script>
-      function renderRanking(rankingData, showHidden) {
+      function renderRanking(rankingData, hideAnon) {
         const rankingList = document.getElementById('ranking-list');
         rankingList.innerHTML = '';
 
         rankingData.ranking.forEach((entry) => {
           // チェックがOFFなら伏せユーザ（********）は表示しない
-          if (showHidden && entry.name === '********') return;
+          if (hideAnon && entry.name === '********') return;
 
           let medalIcon = '';
           if (entry.rank === 1) medalIcon = '🥇';
@@ -183,8 +184,8 @@
         try {
           const response = await fetch('https://exercise-ranking.grimoire13th.workers.dev/ranking');
           const rankingData = await response.json();
-          const showHidden = document.getElementById('show-hidden').checked;
-          renderRanking(rankingData, showHidden);
+          const hideAnon = document.getElementById('hide-anon').checked;
+          renderRanking(rankingData, hideAnon);
 
           // ...ツールチップ処理はそのまま...
           let tooltip = document.getElementById('entry-tooltip');
@@ -274,7 +275,7 @@
         fetchUserScore(userNameInput.value); // ユーザー情報の取得
       });
 
-      document.getElementById('show-hidden').addEventListener('change', fetchRanking);
+      document.getElementById('hide-anon').addEventListener('change', fetchRanking);
     </script>
   </body>
 </html>
