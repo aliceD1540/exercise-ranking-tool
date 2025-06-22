@@ -49,13 +49,13 @@ export default {
                     LIMIT 100`
 				).all();
 				const ranking = [];
-				let prevScore = 0;
+				let prevScore = -1;
 				let prevRank = 0;
 				let count = 0;
 				let displayRank = 1; // 表示用のrank
 				for (const row of result.results) {
 					count++;
-					if (prevScore === 0 || row.score !== prevScore) {
+					if (prevScore === -1 || row.score !== prevScore) {
 						displayRank = prevRank + 1;
 						prevScore = Number(row.score);
 					}
