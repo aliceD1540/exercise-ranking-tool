@@ -34,7 +34,19 @@ export default {
 			if (pathname === '/ranking') {
 				// ランキング情報を返す
 				const result = await env.DB.prepare(
-					`SELECT bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at, is_visible FROM ranking ORDER BY score DESC LIMIT 100`
+					`SELECT
+                        bsky_handle, 
+                        bsky_display_name, 
+                        bsky_icon_url, 
+                        score, 
+                        score_accumulated, 
+                        last_updated_at, 
+                        EXISTS (
+                            SELECT 1 FROM visible_users vu WHERE vu.bsky_did = ranking.bsky_did
+                        ) AS is_visible
+                    FROM ranking
+                    ORDER BY score DESC
+                    LIMIT 100`
 				).all();
 				const ranking = [];
 				let prevScore = 0;
@@ -43,7 +55,7 @@ export default {
 				let displayRank = 1; // 表示用のrank
 				for (const row of result.results) {
 					count++;
-					if (prevScore === null || row.score !== prevScore) {
+					if (prevScore === 0 || row.score !== prevScore) {
 						displayRank = prevRank + 1;
 						prevScore = Number(row.score);
 					}
@@ -137,6 +149,9 @@ export default {
 				sort: 'top',
 				limit: 100, // 【TODO】100件超えたら正しく動かなくなるのでWARNING出したい
 			});
+			if (apires.data.posts.length > 100) {
+				console.warn(`Warning: The number of results exceeds the limit of 100. Only the first 100 results will be processed.`);
+			}
 			await Promise.all(
 				(apires.data.posts as Post[]).map(async (post) => {
 					const displayName = post.author.displayName ?? '';

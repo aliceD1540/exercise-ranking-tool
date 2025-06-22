@@ -36,9 +36,15 @@ CREATE TABLE IF NOT EXISTS ranking (
     score INTEGER NOT NULL,
     score_accumulated INTEGER NOT NULL,
     last_updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_visible INTEGER NOT NULL DEFAULT 0,
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bsky_did ON ranking (bsky_did);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bsky_handle ON ranking (bsky_handle);
 CREATE INDEX IF NOT EXISTS idx_score ON ranking (score);
+
+CREATE TABLE IF NOT EXISTS visible_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bsky_did TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_visible_bsky_did ON visible_users (bsky_did);
 ```

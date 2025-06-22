@@ -208,7 +208,6 @@
               }
               tooltip.innerHTML = html;
               tooltip.style.display = 'block';
-              document.addEventListener('mousemove', moveTooltip);
             }
           });
 
@@ -216,14 +215,15 @@
             const nameDiv = e.target.closest('.name[data-entry]');
             if (nameDiv) {
               tooltip.style.display = 'none';
-              document.removeEventListener('mousemove', moveTooltip);
             }
           });
 
-          function moveTooltip(e) {
-            tooltip.style.left = e.pageX + 16 + 'px';
-            tooltip.style.top = e.pageY + 12 + 'px';
-          }
+          document.addEventListener('mousemove', function (e) {
+            if (tooltip.style.display === 'block') {
+              tooltip.style.left = e.pageX + 16 + 'px';
+              tooltip.style.top = e.pageY + 12 + 'px';
+            }
+          });
         } catch (error) {
           document.getElementById('ranking-list').innerHTML =
             'ランキングデータ取得に失敗しました。';
