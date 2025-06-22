@@ -119,7 +119,11 @@
         <p id="user-rank">データ取得中...</p>
         <div class="ranking-item">
           <div class="icon">
-            <img id="user-icon" src="./icon_sample.png" alt="トレーニングアイコン" width="40" />
+            <img
+              id="user-icon"
+              src="https://r2.project-grimoire.dev/workout-ranking/anon_icon_fitness.png"
+              alt="トレーニングアイコン"
+              width="40" />
           </div>
           <div class="name">
             <input
@@ -158,7 +162,7 @@
           const entryData = {
             アカウント: entry.account,
             名前: entry.name,
-            スコア: entry.score || 0,
+            現在スコア: entry.score === 0 ? '0' : entry.score,
             累計スコア: entry.score_accumulated || 0,
             日付: entry.date || '',
             コメント: entry.comment || '',

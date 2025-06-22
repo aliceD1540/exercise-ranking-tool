@@ -147,10 +147,11 @@ export default {
 				since: since,
 				until: until,
 				sort: 'top',
-				limit: 100, // 【TODO】100件超えたら正しく動かなくなるのでWARNING出したい
+				limit: 100,
 			});
-			if (apires.data.posts.length > 100) {
-				console.warn(`Warning: The number of results exceeds the limit of 100. Only the first 100 results will be processed.`);
+			if (apires.data.posts.length > 80) {
+				// 【TODO】100件超えたら正しく動かなくなるので、80件を超えたらWARNINGを出す
+				console.warn(`Warning: searchPosts returned more than 80 posts. This may cause issues with ranking.`);
 			}
 			await Promise.all(
 				(apires.data.posts as Post[]).map(async (post) => {
