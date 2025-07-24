@@ -176,9 +176,19 @@ export default {
 			console.log(`handleList: ${JSON.stringify(handleList)}`);
 			let result;
 			if (handleList.length > 0) {
-				result = await env.DB.prepare(`SELECT bsky_did FROM ranking WHERE bsky_did IN (${handleList.map(() => '?').join(',')})`)
-					.bind(...handleList)
-					.all();
+				// SQLiteの変数制限を避けるため、バッチ処理を実装
+				const batchSize = 100; // SQLiteの変数制限を考慮したバッチサイズ
+				const allResults = [];
+
+				for (let i = 0; i < handleList.length; i += batchSize) {
+					const batch = handleList.slice(i, i + batchSize);
+					const batchResult = await env.DB.prepare(`SELECT bsky_did FROM ranking WHERE bsky_did IN (${batch.map(() => '?').join(',')})`)
+						.bind(...batch)
+						.all();
+					allResults.push(...batchResult.results);
+				}
+
+				result = { results: allResults };
 			} else {
 				result = { results: [] };
 			}
