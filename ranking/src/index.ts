@@ -206,23 +206,29 @@ export default {
 					const date = new Date(unixTime);
 					// console.log(key.name, unixTime);
 					const formattedDate = date.toISOString().replace(/\.\d{3}Z$/, '.000Z');
-					// BlueskyのAPIを叩いてhandle, display_name, icon_urlを取得する
-					const profile = await agent.app.bsky.actor.getProfile({ actor: key.name });
+					try {
+						// BlueskyのAPIを叩いてhandle, display_name, icon_urlを取得する
+						const profile = await agent.app.bsky.actor.getProfile({ actor: key.name });
 
-					// INSERT文を実行
-					await env.DB.prepare(
-						'INSERT INTO ranking (bsky_did, bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
-					)
-						.bind(
-							key.name ?? '',
-							profile.data.handle ?? '', // bsky_handle
-							profile.data.displayName ?? '',
-							profile.data.avatar ?? '',
-							1, // スコアは1で初期化
-							1, // スコア累積は1で初期化
-							formattedDate // last_updated_at
+						// INSERT文を実行
+						await env.DB.prepare(
+							'INSERT INTO ranking (bsky_did, bsky_handle, bsky_display_name, bsky_icon_url, score, score_accumulated, last_updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
 						)
-						.run();
+							.bind(
+								key.name ?? '',
+								profile.data.handle ?? '', // bsky_handle
+								profile.data.displayName ?? '',
+								profile.data.avatar ?? '',
+								1, // スコアは1で初期化
+								1, // スコア累積は1で初期化
+								formattedDate // last_updated_at
+							)
+							.run();
+					} catch (error) {
+						console.warn(`Failed to get profile for ${key.name}:`, (error as Error).message);
+						// プロフィールが見つからない場合はKVから削除
+						await env.KV.delete(key.name);
+					}
 				}
 			});
 			await Promise.all(insertPromises);
@@ -236,15 +242,19 @@ export default {
 					const unixTime = Number(value);
 					const date = new Date(unixTime);
 					const formattedDate = date.toISOString().replace(/\.\d{3}Z$/, '.000Z');
-					// BlueskyのAPIを叩いてhandle, display_name, icon_urlを取得する
-					const profile = await agent.app.bsky.actor.getProfile({ actor: did });
-					// スコアを1増やして、スコア累積も1増やす
-					// ついでにhandle,display_name,icon_urlも最新化
-					await env.DB.prepare(
-						'UPDATE ranking SET score = score + 1, score_accumulated = score_accumulated + 1, last_updated_at = ?, bsky_handle = ?, bsky_display_name = ?, bsky_icon_url = ? WHERE bsky_did = ?'
-					)
-						.bind(formattedDate, profile.data.handle ?? '', profile.data.displayName ?? '', profile.data.avatar ?? '', did)
-						.run();
+					try {
+						// BlueskyのAPIを叩いてhandle, display_name, icon_urlを取得する
+						const profile = await agent.app.bsky.actor.getProfile({ actor: did });
+						// スコアを1増やして、スコア累積も1増やす
+						// ついでにhandle,display_name,icon_urlも最新化
+						await env.DB.prepare(
+							'UPDATE ranking SET score = score + 1, score_accumulated = score_accumulated + 1, last_updated_at = ?, bsky_handle = ?, bsky_display_name = ?, bsky_icon_url = ? WHERE bsky_did = ?'
+						)
+							.bind(formattedDate, profile.data.handle ?? '', profile.data.displayName ?? '', profile.data.avatar ?? '', did)
+							.run();
+					} catch (error) {
+						console.warn(`Failed to get profile for ${did}:`, (error as Error).message);
+					}
 				}
 				// 48時間以上更新されていない場合はスコアを-1（マイナスにはならない）、スコア累積はそのまま
 				else if (value && new Date(Number(value)) < new Date(Date.now() - 48 * 60 * 60 * 1000)) {
